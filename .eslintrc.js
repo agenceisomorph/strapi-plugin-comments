@@ -32,8 +32,9 @@ module.exports = {
     // Variables non utilisées
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
 
-    // Imports
+    // Imports — require() utilisé dans les dynamic imports Strapi
     '@typescript-eslint/no-require-imports': 'off',
+    '@typescript-eslint/no-var-requires': 'off',
 
     // Console autorisé dans les services Strapi (logs structurés)
     'no-console': 'off',
