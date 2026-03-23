@@ -1,6 +1,6 @@
 # CI — Intégration continue du plugin strapi-plugin-comments
 # Déclenché sur chaque PR et push sur develop/main
-# Matrix Node 18 + 20 pour garantir la compatibilité
+# Node 20+ requis (dépendances Strapi V5)
 
 name: CI
 
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20]
+        node-version: [20, 22]
 
     steps:
       - name: Checkout
@@ -26,10 +26,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Lint
         run: npm run lint
