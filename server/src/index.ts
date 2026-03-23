@@ -11,8 +11,6 @@
  * Documentation : https://docs.strapi.io/dev-docs/plugins/development/create-a-plugin
  */
 
-import { type Core } from '@strapi/strapi';
-
 import register from './register';
 import bootstrap from './bootstrap';
 import destroy from './destroy';

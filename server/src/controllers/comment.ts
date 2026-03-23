@@ -13,7 +13,7 @@
 import { z } from 'zod';
 import { type Core } from '@strapi/strapi';
 import { type StrapiContext } from '../types/strapi';
-import { CommentServiceError } from '../services/comment';
+// CommentServiceError identifié par svcErr.name dans les catch blocks (pas d'import nécessaire)
 
 // ─── Schémas de validation Zod ────────────────────────────────────────────────
 

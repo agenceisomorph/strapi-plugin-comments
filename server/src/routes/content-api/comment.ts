@@ -10,8 +10,6 @@
  * La route DELETE /comments/:id est protégée par la policy comment-owner (optionnelle).
  */
 
-import { type RouteConfig } from '../../types/strapi';
-
 const contentApiRoutes = {
   type: 'content-api' as const,
   prefix: '/comments',
