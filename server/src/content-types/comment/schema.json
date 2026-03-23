@@ -1,0 +1,96 @@
+{
+  "kind": "collectionType",
+  "collectionName": "comments_comments",
+  "info": {
+    "singularName": "comment",
+    "pluralName": "comments",
+    "displayName": "Comment",
+    "description": "Commentaire utilisateur attaché à une entité de contenu"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "firstname": {
+      "type": "string",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "content": {
+      "type": "text",
+      "required": true,
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "blocked": {
+      "type": "boolean",
+      "default": false,
+      "required": true
+    },
+    "approved": {
+      "type": "boolean",
+      "default": true,
+      "required": true,
+      "description": "false si modération manuelle activée dans config"
+    },
+    "avatarColor": {
+      "type": "string",
+      "description": "Code couleur hexadécimal pastel généré à la création (ex: #B5EAD7)"
+    },
+    "relatedDocumentId": {
+      "type": "string",
+      "required": true,
+      "description": "documentId de l'entité cible (ex: article) — non-relation Strapi, string brute"
+    },
+    "relatedCollection": {
+      "type": "string",
+      "required": true,
+      "description": "UID de la collection cible (ex: api::article.article) — permet multi-collection"
+    },
+    "parent": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::comments.comment",
+      "inversedBy": "children"
+    },
+    "children": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "plugin::comments.comment",
+      "mappedBy": "parent"
+    },
+    "author": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "contentHtml": {
+      "type": "richtext",
+      "description": "HTML sanitisé produit par le WYSIWYG admin pour les réponses admin. Null pour les commentaires utilisateurs standards."
+    },
+    "isAdminReply": {
+      "type": "boolean",
+      "default": false,
+      "description": "true si ce commentaire est une réponse créée depuis le panneau admin."
+    },
+    "likes": {
+      "type": "integer",
+      "default": 0,
+      "description": "Compteur de 'J'aime' — incrémenté via POST /:id/like, protégé par rate-limit."
+    },
+    "pinned": {
+      "type": "boolean",
+      "default": false,
+      "description": "Commentaire épinglé — affiché en priorité en haut de la liste. Togglé via PUT /admin/:id/pin."
+    }
+  }
+}

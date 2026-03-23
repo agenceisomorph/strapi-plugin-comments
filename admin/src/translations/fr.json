@@ -1,0 +1,34 @@
+{
+  "comments.plugin.name": "Comments",
+  "comments.plugin.section": "Commentaires",
+
+  "comments.dashboard.title": "Vue d'ensemble",
+  "comments.dashboard.subtitle": "Statistiques en temps réel du système de commentaires",
+  "comments.dashboard.loading": "Chargement des statistiques...",
+  "comments.dashboard.retry": "Réessayer",
+  "comments.dashboard.section.comments": "Commentaires",
+  "comments.dashboard.section.reports": "Signalements",
+  "comments.dashboard.stat.total": "Total",
+  "comments.dashboard.stat.pending": "En attente",
+  "comments.dashboard.stat.approved": "Approuvés",
+  "comments.dashboard.stat.blocked": "Bloqués",
+  "comments.dashboard.stat.reportsTotal": "Total signalements",
+  "comments.dashboard.stat.reportsPending": "Signalements en attente",
+  "comments.dashboard.link.comments": "Gérer les commentaires",
+  "comments.dashboard.link.reports": "Traiter les signalements ({count})",
+
+  "comments.comments.title": "Commentaires",
+  "comments.comments.loading": "Chargement des commentaires...",
+  "comments.comments.refresh": "Actualiser",
+  "comments.comments.filter.status": "Statut",
+
+  "comments.reports.title": "Signalements",
+  "comments.reports.subtitle": "Signalements soumis par les utilisateurs",
+  "comments.reports.loading": "Chargement des signalements...",
+  "comments.reports.refresh": "Actualiser",
+  "comments.reports.filter.status": "Statut",
+
+  "comments.settings.title": "Configuration",
+  "comments.settings.subtitle": "Configuration active du plugin. Pour modifier, éditez config/plugins.ts dans votre projet Strapi.",
+  "comments.settings.loading": "Chargement de la configuration..."
+}

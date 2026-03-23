@@ -1,0 +1,34 @@
+{
+  "comments.plugin.name": "Comments",
+  "comments.plugin.section": "Comments",
+
+  "comments.dashboard.title": "Overview",
+  "comments.dashboard.subtitle": "Real-time statistics for the comment system",
+  "comments.dashboard.loading": "Loading statistics...",
+  "comments.dashboard.retry": "Retry",
+  "comments.dashboard.section.comments": "Comments",
+  "comments.dashboard.section.reports": "Reports",
+  "comments.dashboard.stat.total": "Total",
+  "comments.dashboard.stat.pending": "Pending",
+  "comments.dashboard.stat.approved": "Approved",
+  "comments.dashboard.stat.blocked": "Blocked",
+  "comments.dashboard.stat.reportsTotal": "Total reports",
+  "comments.dashboard.stat.reportsPending": "Pending reports",
+  "comments.dashboard.link.comments": "Manage comments",
+  "comments.dashboard.link.reports": "Process reports ({count})",
+
+  "comments.comments.title": "Comments",
+  "comments.comments.loading": "Loading comments...",
+  "comments.comments.refresh": "Refresh",
+  "comments.comments.filter.status": "Status",
+
+  "comments.reports.title": "Reports",
+  "comments.reports.subtitle": "Reports submitted by users",
+  "comments.reports.loading": "Loading reports...",
+  "comments.reports.refresh": "Refresh",
+  "comments.reports.filter.status": "Status",
+
+  "comments.settings.title": "Settings",
+  "comments.settings.subtitle": "Active plugin configuration. To modify, edit config/plugins.ts in your Strapi project.",
+  "comments.settings.loading": "Loading configuration..."
+}

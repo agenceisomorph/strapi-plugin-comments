@@ -1,0 +1,43 @@
+{
+  "kind": "collectionType",
+  "collectionName": "comments_reports",
+  "info": {
+    "singularName": "report",
+    "pluralName": "reports",
+    "displayName": "Comment Report",
+    "description": "Signalements de commentaires par les utilisateurs"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": { "visible": false },
+    "content-type-builder": { "visible": false }
+  },
+  "attributes": {
+    "reason": {
+      "type": "enumeration",
+      "enum": ["offensive", "spam", "harassment", "misinformation", "other"],
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 500
+    },
+    "reporterEmail": {
+      "type": "email",
+      "required": true
+    },
+    "comment": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::comments.comment"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["pending", "reviewed", "dismissed"],
+      "default": "pending",
+      "required": true
+    }
+  }
+}

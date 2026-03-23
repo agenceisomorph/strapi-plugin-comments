@@ -1,0 +1,49 @@
+# CI — Intégration continue du plugin strapi-plugin-comments
+# Déclenché sur chaque PR et push sur develop/main
+# Matrix Node 18 + 20 pour garantir la compatibilité
+
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Tests unitaires
+        run: npm test
+
+      - name: Build serveur
+        run: npm run build
+
+      - name: Vérifier les fichiers dist
+        run: |
+          test -f dist/server/src/index.js || (echo "❌ dist/server/src/index.js manquant" && exit 1)
+          echo "✅ Build vérifié"

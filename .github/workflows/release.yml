@@ -1,0 +1,78 @@
+# Release — Publication NPM automatique sur tag v*
+# Workflow : tag v1.0.0 → CI complet → npm publish → GitHub Release
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  ci:
+    name: CI avant publication
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run type-check
+      - run: npm test
+      - run: npm run build
+      - name: Vérifier les fichiers dist
+        run: test -f dist/server/src/index.js
+
+  publish:
+    name: Publication NPM
+    needs: ci
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - run: npm run build
+      - run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  github-release:
+    name: GitHub Release
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Générer le changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
+          if [ -z "$PREV_TAG" ]; then
+            CHANGELOG=$(git log --oneline --no-merges)
+          else
+            CHANGELOG=$(git log --oneline --no-merges ${PREV_TAG}..HEAD)
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Créer la release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## Changements
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ---
+            📦 [Voir sur NPM](https://www.npmjs.com/package/strapi-plugin-comments)
+          generate_release_notes: true

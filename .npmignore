@@ -1,0 +1,28 @@
+# Sources TypeScript (le dist/ compilé suffit)
+server/src/
+admin/src/
+__tests__/
+*.test.ts
+*.spec.ts
+
+# Config dev
+.github/
+.vscode/
+.husky/
+_docs/
+tsconfig*.json
+server/tsconfig*.json
+admin/tsconfig*.json
+vitest.config.ts
+.eslintrc*
+.prettierrc*
+
+# Fichiers temporaires
+.tmp/
+*.log
+node_modules/
+
+# Documentation dev
+RELEASE.md
+SECURITY.md
+CLAUDE.md

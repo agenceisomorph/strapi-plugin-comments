@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "declaration": false,
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@strapi/strapi/admin": ["../node_modules/@strapi/strapi/dist/admin/index.d.ts"],
+      "@strapi/admin/strapi-admin": ["../node_modules/@strapi/admin/dist/admin/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*", "custom.d.ts"],
+  "exclude": ["node_modules", "../dist"]
+}
