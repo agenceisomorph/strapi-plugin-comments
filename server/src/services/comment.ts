@@ -184,10 +184,9 @@ export async function findByDocument(
       },
     },
     sort: ['createdAt:desc'],
-    pagination: {
-      page: pagination.page ?? 1,
-      pageSize: pagination.pageSize ?? 50,
-    },
+    // Pagination v5 : limit/start à la racine (pagination:{page,pageSize} ignoré)
+    limit: pagination.pageSize ?? 50,
+    start: ((pagination.page ?? 1) - 1) * (pagination.pageSize ?? 50),
   });
 
   // Enrichissement avec les données d'avatar
@@ -322,14 +321,21 @@ export async function create(
 
   // ── Étape 2 : Vérification auteur bloqué ──────────────────────────────────
   if (cfg.subscriber.enabled) {
+    // ⚠️ `pagination: { limit: 1 }` faisait planter la requête ("Undefined attribute
+    // level operator type") et le .catch(() => []) avalait l'erreur : la vérification
+    // auteur bloqué ne s'exécutait JAMAIS (un compte suspendu pouvait commenter).
+    // Pagination v5 correcte = `limit` à la racine ; l'échec est désormais loggué.
     const existingUsers = await strapi
       .documents('plugin::users-permissions.user')
       .findMany({
         filters: { email: { $eq: data.email.toLowerCase() } },
         fields: ['blocked'],
-        pagination: { limit: 1 },
+        limit: 1,
       })
-      .catch(() => []);
+      .catch((err: unknown) => {
+        strapi.log.error('[strapi-plugin-comments] Vérification auteur bloqué en échec :', err);
+        return [];
+      });
 
     const existingUser = existingUsers[0] as { blocked?: boolean } | undefined;
     if (existingUser?.blocked) {

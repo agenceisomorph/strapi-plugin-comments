@@ -165,7 +165,9 @@ export async function findAll(
         },
       },
       sort: ['createdAt:desc'],
-      pagination,
+      // Pagination v5 : limit/start à la racine (pagination:{page,pageSize} ignoré)
+      limit: pagination.pageSize,
+      start: (pagination.page - 1) * pagination.pageSize,
     }),
     strapi.documents('plugin::comments.report').count({
       filters: dbFilters as never,

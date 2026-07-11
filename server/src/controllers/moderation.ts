@@ -96,10 +96,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       filters['relatedCollection'] = { $eq: relatedCollection };
     }
 
-    // BUG-4 : Strapi V5 Document Service ne supporte pas limit/offset directement.
-    // Il faut utiliser pagination: { page, pageSize } pour que findMany retourne
-    // les bons résultats. Avec limit/offset, les filtres approved/blocked sont
-    // ignorés silencieusement et un commentaire débloqué peut ne pas apparaître.
+    // BUG-4 : le Document Service Strapi v5 pagine avec `limit`/`start` à la racine
+    // (`offset` n'existe pas, et `pagination: { page, pageSize }` est ignoré
+    // silencieusement — vérifié sur banc d'essai 2026-07-11 : pageSize=2 renvoyait
+    // tous les enregistrements).
     const findParams = {
       filters: filters as never,
       populate: {
@@ -108,7 +108,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         children: true,
       },
       sort: [`${sortBy}:${sortOrder}`],
-      pagination: { page, pageSize },
+      limit: pageSize,
+      start: (page - 1) * pageSize,
     };
 
     const results = await strapi.documents('plugin::comments.comment').findMany(findParams);
@@ -506,40 +507,36 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async getSettings(ctx: StrapiContext): Promise<void> {
     const store = strapi.store({ type: 'plugin', name: 'comments' });
-    const settings = await store.get({ key: 'settings' });
+    const settings = (await store.get({ key: 'settings' })) as Record<string, unknown> | null;
 
-    // Si aucun paramètre stocké, retourner les defaults depuis la config
-    if (!settings) {
-      const config = strapi.config.get('plugin::comments') as unknown as PluginConfig;
-      ctx.status = 200;
-      ctx.body = {
-        data: {
-          requireApproval: config.requireApproval ?? false,
-          profanityFilterEnabled: config.profanityFilter?.enabled ?? true,
-          profanityFilterLanguages: config.profanityFilter?.languages ?? ['fr', 'en'],
-          profanityFilterAction: config.profanityFilter?.action ?? 'block',
-          rateLimitEnabled: config.rateLimit?.enabled ?? true,
-          rateLimitMax: config.rateLimit?.max ?? 5,
-          rateLimitWindowMs: config.rateLimit?.windowMs ?? 60000,
-          rateLimitWhitelist: config.rateLimit?.whitelist?.join(', ') ?? '',
-          avatarEnabled: config.avatar?.enabled ?? true,
-          subscriberEnabled: config.subscriber?.enabled ?? true,
-          subscriberCategoryName: config.subscriber?.categoryName ?? 'Abonné',
-          moderationEnabled: config.moderation?.enabled ?? false,
-          reportThresholdEnabled: config.reportThreshold?.enabled ?? true,
-          reportThresholdCount: config.reportThreshold?.count ?? 3,
-          recaptchaEnabled: config.recaptcha?.enabled ?? false,
-          // SEC-001 : on n'expose jamais les clés reCAPTCHA côté API.
-          // Le booléen indique si la clé secrète est présente dans l'environnement.
-          recaptchaConfigured: !!process.env.RECAPTCHA_SECRET_KEY,
-          recaptchaMinScore: config.recaptcha?.scoreThreshold ?? 0.5,
-        },
-      };
-      return;
-    }
+    // Defaults depuis la config fichier ; les valeurs stockées (potentiellement
+    // partielles — le PUT ne persiste que les clés modifiées) sont fusionnées
+    // par-dessus pour que l'admin voie toujours l'état effectif complet.
+    const config = strapi.config.get('plugin::comments') as unknown as PluginConfig;
+    const defaults = {
+      requireApproval: config.requireApproval ?? false,
+      profanityFilterEnabled: config.profanityFilter?.enabled ?? true,
+      profanityFilterLanguages: config.profanityFilter?.languages ?? ['fr', 'en'],
+      profanityFilterAction: config.profanityFilter?.action ?? 'block',
+      rateLimitEnabled: config.rateLimit?.enabled ?? true,
+      rateLimitMax: config.rateLimit?.max ?? 5,
+      rateLimitWindowMs: config.rateLimit?.windowMs ?? 60000,
+      rateLimitWhitelist: config.rateLimit?.whitelist?.join(', ') ?? '',
+      avatarEnabled: config.avatar?.enabled ?? true,
+      subscriberEnabled: config.subscriber?.enabled ?? true,
+      subscriberCategoryName: config.subscriber?.categoryName ?? 'Abonné',
+      moderationEnabled: config.moderation?.enabled ?? false,
+      reportThresholdEnabled: config.reportThreshold?.enabled ?? true,
+      reportThresholdCount: config.reportThreshold?.count ?? 3,
+      recaptchaEnabled: config.recaptcha?.enabled ?? false,
+      // SEC-001 : on n'expose jamais les clés reCAPTCHA côté API.
+      // Le booléen indique si la clé secrète est présente dans l'environnement.
+      recaptchaConfigured: !!process.env.RECAPTCHA_SECRET_KEY,
+      recaptchaMinScore: config.recaptcha?.scoreThreshold ?? 0.5,
+    };
 
     ctx.status = 200;
-    ctx.body = { data: settings };
+    ctx.body = { data: { ...defaults, ...(settings ?? {}) } };
   },
 
   /**
@@ -568,7 +565,12 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       recaptchaMinScore: z.number().min(0).max(1).optional(),
     });
 
-    const parseResult = SettingsSchema.safeParse(ctx.request.body);
+    // Accepte le corps enveloppé { data: {...} } (convention des autres endpoints)
+    // comme le corps à plat. Sans ce déballage, Zod strippe la clé inconnue `data`
+    // et persiste un objet vide : PUT 200 mais réglages perdus en silence
+    // (constaté sur banc d'essai 2026-07-11).
+    const rawBody = (ctx.request.body as Record<string, unknown>)?.['data'] ?? ctx.request.body;
+    const parseResult = SettingsSchema.safeParse(rawBody);
 
     if (!parseResult.success) {
       ctx.status = 400;

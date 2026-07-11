@@ -42,3 +42,7 @@ coverage/
 # Temporaire
 tmp/
 temp/
+
+# Suivi interne (contient clés de test — jamais versionné, repo public)
+CLAUDE.md
+tasks/
