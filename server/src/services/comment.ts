@@ -40,13 +40,19 @@ async function getEffectiveConfig(strapi: Core.Strapi, config: PluginConfig): Pr
       profanityFilter: {
         ...config.profanityFilter,
         enabled: (settings.profanityFilterEnabled as boolean) ?? config.profanityFilter.enabled,
-        // Mapping Settings admin → config interne : 'block' → 'reject', 'sanitize' → 'flag'
+        // BUG-3 : Mapping Settings admin → config interne.
+        // L'enum Zod du store accepte 'block'/'sanitize', mais on gère aussi
+        // les valeurs internes 'reject'/'flag' pour robustesse (modif directe en base).
         action: (() => {
           const raw = settings.profanityFilterAction as string | undefined;
           if (!raw) return config.profanityFilter.action;
           if (raw === 'block') return 'reject' as const;
           if (raw === 'sanitize') return 'flag' as const;
-          return raw as PluginConfig['profanityFilter']['action'];
+          // Valeurs internes déjà normalisées (ex: migration manuelle en base)
+          if (raw === 'reject') return 'reject' as const;
+          if (raw === 'flag') return 'flag' as const;
+          // Valeur inconnue → fallback config fichier
+          return config.profanityFilter.action;
         })(),
       },
       rateLimit: {
@@ -178,10 +184,9 @@ export async function findByDocument(
       },
     },
     sort: ['createdAt:desc'],
-    pagination: {
-      page: pagination.page ?? 1,
-      pageSize: pagination.pageSize ?? 50,
-    },
+    // Pagination v5 : limit/start à la racine (pagination:{page,pageSize} ignoré)
+    limit: pagination.pageSize ?? 50,
+    start: ((pagination.page ?? 1) - 1) * (pagination.pageSize ?? 50),
   });
 
   // Enrichissement avec les données d'avatar
@@ -290,10 +295,18 @@ export async function create(
 
   // ── Étape 1 : Filtre anti-injures ──────────────────────────────────────────
   if (cfg.profanityFilter.enabled) {
+    // BUG-2 : quand action === 'reject', failOpen doit être false.
+    // Sinon une erreur interne du filtre (dictionnaire non initialisé, etc.)
+    // ferait retourner check()=false et laisserait passer l'injure silencieusement.
+    // Pour 'flag', le comportement fail-open est acceptable (le commentaire part en modération).
+    const failOpen = cfg.profanityFilter.action === 'reject'
+      ? false
+      : (cfg.profanityFilter.failOpen ?? true);
+
     // Utiliser l'implémentation injectable si fournie, sinon le wrapper leo-profanity
     const hasProfanity = cfg.profanityFilter.customFilter
       ? cfg.profanityFilter.customFilter.check(data.content)
-      : profanityService.check(data.content, cfg.profanityFilter.failOpen);
+      : profanityService.check(data.content, failOpen);
 
     if (hasProfanity) {
       if (cfg.profanityFilter.action === 'reject') {
@@ -308,14 +321,21 @@ export async function create(
 
   // ── Étape 2 : Vérification auteur bloqué ──────────────────────────────────
   if (cfg.subscriber.enabled) {
+    // ⚠️ `pagination: { limit: 1 }` faisait planter la requête ("Undefined attribute
+    // level operator type") et le .catch(() => []) avalait l'erreur : la vérification
+    // auteur bloqué ne s'exécutait JAMAIS (un compte suspendu pouvait commenter).
+    // Pagination v5 correcte = `limit` à la racine ; l'échec est désormais loggué.
     const existingUsers = await strapi
       .documents('plugin::users-permissions.user')
       .findMany({
         filters: { email: { $eq: data.email.toLowerCase() } },
         fields: ['blocked'],
-        pagination: { limit: 1 },
+        limit: 1,
       })
-      .catch(() => []);
+      .catch((err: unknown) => {
+        strapi.log.error('[strapi-plugin-comments] Vérification auteur bloqué en échec :', err);
+        return [];
+      });
 
     const existingUser = existingUsers[0] as { blocked?: boolean } | undefined;
     if (existingUser?.blocked) {
@@ -455,9 +475,14 @@ export async function createReply(
   const targetCollection = replyData.relatedCollection || cfg.targetCollection;
 
   if (cfg.profanityFilter.enabled) {
+    // BUG-2 (réplique dans createReply) : même logique failOpen que dans create().
+    const failOpenReply = cfg.profanityFilter.action === 'reject'
+      ? false
+      : (cfg.profanityFilter.failOpen ?? true);
+
     const hasProfanity = cfg.profanityFilter.customFilter
       ? cfg.profanityFilter.customFilter.check(replyData.content)
-      : profanityService.check(replyData.content, cfg.profanityFilter.failOpen);
+      : profanityService.check(replyData.content, failOpenReply);
 
     if (hasProfanity && cfg.profanityFilter.action === 'reject') {
       throw new CommentServiceError(

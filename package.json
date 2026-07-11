@@ -59,12 +59,24 @@
     "react-router-dom": "^6.0.0"
   },
   "peerDependenciesMeta": {
-    "@strapi/design-system": { "optional": true },
-    "@strapi/icons": { "optional": true },
-    "react": { "optional": true },
-    "react-dom": { "optional": true },
-    "react-intl": { "optional": true },
-    "react-router-dom": { "optional": true }
+    "@strapi/design-system": {
+      "optional": true
+    },
+    "@strapi/icons": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "react-intl": {
+      "optional": true
+    },
+    "react-router-dom": {
+      "optional": true
+    }
   },
   "dependencies": {
     "leo-profanity": "^1.8.0",
@@ -89,5 +101,10 @@
     "name": "comments",
     "displayName": "Comments",
     "description": "Système de commentaires avec modération, panneau admin, signalements, anti-injures, reCAPTCHA V3 et rate limiting"
+  },
+  "overrides": {
+    "styled-components": {
+      "postcss": "^8.5.10"
+    }
   }
 }

@@ -117,11 +117,14 @@ export async function registerAsSubscriber(
       return null;
     }
 
-    // Recherche de l'utilisateur existant par email
+    // BUG-5 : le Document Service Strapi v5 pagine avec `limit`/`start` à la racine
+    // des params — pas `pagination: { limit }` ni `pagination: { page, pageSize }`
+    // (clés inconnues → ignorées, ou interprétées comme opérateur de filtre →
+    // "Undefined attribute level operator type").
     const existingUsers = await strapi.documents('plugin::users-permissions.user').findMany({
       filters: { email: { $eq: email.toLowerCase() } },
       populate: ['userCategories'],
-      pagination: { limit: 1 },
+      limit: 1,
     });
 
     const existingUser = existingUsers[0] as (StrapiUser & {
@@ -154,11 +157,12 @@ export async function registerAsSubscriber(
       return existingUser as StrapiUser;
     }
 
-    // Récupération du rôle "Authenticated" (rôle public par défaut de users-permissions)
+    // BUG-5 (cause racine) : le service role de users-permissions n'accepte plus
+    // findOne({ type }) en Strapi v5 (l'objet est traité comme un id → crash
+    // "Undefined attribute level operator type"). Passage par le Document Service.
     const authenticatedRole = await strapi
-      .plugin('users-permissions')
-      .service('role')
-      .findOne({ type: 'authenticated' }) as { id: number; documentId: string } | null;
+      .documents('plugin::users-permissions.role')
+      .findFirst({ filters: { type: { $eq: 'authenticated' } } }) as { id: number; documentId: string } | null;
 
     // Création du nouvel utilisateur Abonné
     const newUser = await strapi.documents('plugin::users-permissions.user').create({
