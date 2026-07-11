@@ -117,11 +117,13 @@ export async function registerAsSubscriber(
       return null;
     }
 
-    // Recherche de l'utilisateur existant par email
+    // BUG-5 : Strapi V5 Document Service utilise { page, pageSize } pour la pagination,
+    // pas { limit }. Avec { limit: 1 }, Strapi interprète "limit" comme un opérateur
+    // de filtre inconnu et lance "Undefined attribute level operator type".
     const existingUsers = await strapi.documents('plugin::users-permissions.user').findMany({
       filters: { email: { $eq: email.toLowerCase() } },
       populate: ['userCategories'],
-      pagination: { limit: 1 },
+      pagination: { page: 1, pageSize: 1 },
     });
 
     const existingUser = existingUsers[0] as (StrapiUser & {

@@ -96,8 +96,10 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       filters['relatedCollection'] = { $eq: relatedCollection };
     }
 
-    const offset = (page - 1) * pageSize;
-
+    // BUG-4 : Strapi V5 Document Service ne supporte pas limit/offset directement.
+    // Il faut utiliser pagination: { page, pageSize } pour que findMany retourne
+    // les bons résultats. Avec limit/offset, les filtres approved/blocked sont
+    // ignorés silencieusement et un commentaire débloqué peut ne pas apparaître.
     const findParams = {
       filters: filters as never,
       populate: {
@@ -106,8 +108,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         children: true,
       },
       sort: [`${sortBy}:${sortOrder}`],
-      limit: pageSize,
-      offset,
+      pagination: { page, pageSize },
     };
 
     const results = await strapi.documents('plugin::comments.comment').findMany(findParams);

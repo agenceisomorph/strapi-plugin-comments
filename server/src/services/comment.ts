@@ -40,13 +40,19 @@ async function getEffectiveConfig(strapi: Core.Strapi, config: PluginConfig): Pr
       profanityFilter: {
         ...config.profanityFilter,
         enabled: (settings.profanityFilterEnabled as boolean) ?? config.profanityFilter.enabled,
-        // Mapping Settings admin → config interne : 'block' → 'reject', 'sanitize' → 'flag'
+        // BUG-3 : Mapping Settings admin → config interne.
+        // L'enum Zod du store accepte 'block'/'sanitize', mais on gère aussi
+        // les valeurs internes 'reject'/'flag' pour robustesse (modif directe en base).
         action: (() => {
           const raw = settings.profanityFilterAction as string | undefined;
           if (!raw) return config.profanityFilter.action;
           if (raw === 'block') return 'reject' as const;
           if (raw === 'sanitize') return 'flag' as const;
-          return raw as PluginConfig['profanityFilter']['action'];
+          // Valeurs internes déjà normalisées (ex: migration manuelle en base)
+          if (raw === 'reject') return 'reject' as const;
+          if (raw === 'flag') return 'flag' as const;
+          // Valeur inconnue → fallback config fichier
+          return config.profanityFilter.action;
         })(),
       },
       rateLimit: {
@@ -290,10 +296,18 @@ export async function create(
 
   // ── Étape 1 : Filtre anti-injures ──────────────────────────────────────────
   if (cfg.profanityFilter.enabled) {
+    // BUG-2 : quand action === 'reject', failOpen doit être false.
+    // Sinon une erreur interne du filtre (dictionnaire non initialisé, etc.)
+    // ferait retourner check()=false et laisserait passer l'injure silencieusement.
+    // Pour 'flag', le comportement fail-open est acceptable (le commentaire part en modération).
+    const failOpen = cfg.profanityFilter.action === 'reject'
+      ? false
+      : (cfg.profanityFilter.failOpen ?? true);
+
     // Utiliser l'implémentation injectable si fournie, sinon le wrapper leo-profanity
     const hasProfanity = cfg.profanityFilter.customFilter
       ? cfg.profanityFilter.customFilter.check(data.content)
-      : profanityService.check(data.content, cfg.profanityFilter.failOpen);
+      : profanityService.check(data.content, failOpen);
 
     if (hasProfanity) {
       if (cfg.profanityFilter.action === 'reject') {
@@ -455,9 +469,14 @@ export async function createReply(
   const targetCollection = replyData.relatedCollection || cfg.targetCollection;
 
   if (cfg.profanityFilter.enabled) {
+    // BUG-2 (réplique dans createReply) : même logique failOpen que dans create().
+    const failOpenReply = cfg.profanityFilter.action === 'reject'
+      ? false
+      : (cfg.profanityFilter.failOpen ?? true);
+
     const hasProfanity = cfg.profanityFilter.customFilter
       ? cfg.profanityFilter.customFilter.check(replyData.content)
-      : profanityService.check(replyData.content, cfg.profanityFilter.failOpen);
+      : profanityService.check(replyData.content, failOpenReply);
 
     if (hasProfanity && cfg.profanityFilter.action === 'reject') {
       throw new CommentServiceError(

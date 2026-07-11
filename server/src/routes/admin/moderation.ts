@@ -208,16 +208,19 @@ const adminRoutes: RouteConfig = {
       },
     },
 
-    // ── Signalements (Pro) ───────────────────────────────────────────────────
+    // ── Signalements ─────────────────────────────────────────────────────────
+    // BUG-1 : la lecture des signalements est accessible en Community.
+    // Les signalements sont soumis par les utilisateurs publics — l'admin doit
+    // pouvoir les consulter quel que soit le tier.
+    // Les actions (review/dismiss) restent réservées au tier Pro.
     {
       method: 'GET',
       path: '/admin/reports',
       handler: 'report.findAll',
       config: {
         policies: ['plugin::comments.is-admin'],
-        // Pro : liste des signalements réservée au tier Pro
-        middlewares: ['plugin::comments.license-gate'],
-        description: 'Liste paginée des signalements avec filtres (status, commentId) — Pro uniquement',
+        middlewares: [],
+        description: 'Liste paginée des signalements avec filtres (status, commentId)',
       },
     },
     {
