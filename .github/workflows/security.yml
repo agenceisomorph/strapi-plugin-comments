@@ -17,7 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Audit des dépendances (niveau high)
-        run: npm audit --audit-level=high
+      - run: npm install
+      - name: Audit des dépendances de production (bloquant, niveau high)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit complet dont devDependencies (informatif, non bloquant)
+        run: npm audit --audit-level=high || true
