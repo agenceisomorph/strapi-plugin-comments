@@ -162,18 +162,12 @@ const adminRoutes: RouteConfig = {
         description: 'Épingle ou désépingle un commentaire (toggle pinned) — Pro uniquement',
       },
     },
-    {
-      method: 'DELETE',
-      path: '/admin/comments/:id',
-      handler: 'moderation.delete',
-      config: {
-        policies: ['plugin::comments.is-admin'],
-        middlewares: [],
-        description: 'Supprime définitivement un commentaire et ses réponses (cascade)',
-      },
-    },
-
     // ── Actions en masse (Pro) ───────────────────────────────────────────────
+    // ⚠️ Déclarées AVANT `DELETE /admin/comments/:id` : sinon le routeur Koa
+    // matche `/admin/comments/bulk-delete` sur la route paramétrique `:id`
+    // (id="bulk-delete") → suppression unitaire → 404, route bulk inatteignable
+    // même en Pro (constaté sur banc d'essai 2026-07-11). Les routes statiques
+    // doivent précéder les routes paramétriques de même préfixe.
     {
       method: 'PUT',
       path: '/admin/comments/bulk-approve',
@@ -197,7 +191,11 @@ const adminRoutes: RouteConfig = {
       },
     },
     {
-      method: 'DELETE',
+      // POST (pas DELETE) : Strapi/Koa ne parse pas le corps des requêtes DELETE
+      // → `ids` arrivait `undefined` et l'endpoint renvoyait 400 même en Pro
+      // (constaté sur banc d'essai 2026-07-11). Endpoint d'action → POST, cohérent
+      // avec bulk-approve/bulk-block (PUT, corps parsé).
+      method: 'POST',
       path: '/admin/comments/bulk-delete',
       handler: 'moderation.bulkDelete',
       config: {
@@ -205,6 +203,16 @@ const adminRoutes: RouteConfig = {
         // Pro : actions en masse réservées au tier Pro
         middlewares: ['plugin::comments.license-gate'],
         description: 'Supprime plusieurs commentaires en une seule requête — Pro uniquement',
+      },
+    },
+    {
+      method: 'DELETE',
+      path: '/admin/comments/:id',
+      handler: 'moderation.delete',
+      config: {
+        policies: ['plugin::comments.is-admin'],
+        middlewares: [],
+        description: 'Supprime définitivement un commentaire et ses réponses (cascade)',
       },
     },
 
