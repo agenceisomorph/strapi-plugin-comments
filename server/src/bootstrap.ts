@@ -63,7 +63,27 @@ export default async ({ strapi }: { strapi: Core.Strapi }): Promise<void> => {
     }
   }
 
-  // ── Étape 3 : Confirmation du démarrage ───────────────────────────────────
+  // ── Étape 3 : Initialisation de la licence (vérification en ligne) ─────────
+  // Charge le cache persisté, fait une première vérification et planifie les
+  // revérifications. Ne bloque jamais le démarrage (fail-safe → Community).
+  try {
+    const licenseService = strapi.plugin('comments').service('license') as {
+      init: () => Promise<void>;
+      getTier: () => string;
+    };
+    await licenseService.init();
+    console.info(
+      `[strapi-plugin-comments][license] Tier initial : ${licenseService.getTier()}.`
+    );
+  } catch (err) {
+    console.warn(
+      '[strapi-plugin-comments][license] Initialisation de la licence en échec — ' +
+        'tier Community par défaut.',
+      err
+    );
+  }
+
+  // ── Étape 4 : Confirmation du démarrage ───────────────────────────────────
   console.info(
     '[strapi-plugin-comments] Plugin chargé et prêt. ' +
       `Configuration : requireApproval=${pluginConfig.requireApproval}, ` +

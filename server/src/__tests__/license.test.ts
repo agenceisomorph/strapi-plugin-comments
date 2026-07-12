@@ -1,7 +1,12 @@
 /**
- * Tests unitaires — Service de licence
+ * Tests unitaires — Format de clé de licence (`validateLicenseKey`)
  *
- * Couverture :
+ * ⚠️ Depuis la V2 (vérification en ligne), `validateLicenseKey` n'est PLUS la
+ * frontière de sécurité : c'est un simple pré-filtre de format/checksum pour
+ * éviter d'appeler le serveur sur une clé malformée. La validité réelle (achat
+ * Stripe) est vérifiée en ligne — voir `license-online.test.ts`.
+ *
+ * Couverture ici :
  *   - validateLicenseKey : format valide, format invalide, checksum pair/impair
  *   - Cas limites : clé vide, null, undefined, préfixe incorrect, groupes hex incorrects
  *

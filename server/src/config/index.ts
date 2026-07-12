@@ -125,6 +125,27 @@ export interface PluginConfig {
      */
     count: number;
   };
+
+  /**
+   * Clé de licence Pro. Vide/absente = tier Community (limite 500 commentaires).
+   * À renseigner via `config.plugins.ts` depuis l'environnement :
+   * `comments: { config: { licenseKey: env('COMMENTS_LICENSE_KEY') } }`.
+   * La clé est VÉRIFIÉE EN LIGNE (cf. service license) — un simple format valide
+   * ne suffit pas à débloquer le Pro.
+   */
+  licenseKey?: string;
+
+  /** Paramètres de la vérification de licence en ligne. */
+  license: {
+    /** URL du service de vérification ISOMORPH. */
+    verifyUrl: string;
+    /** Intervalle de revérification (heures). */
+    verifyIntervalHours: number;
+    /** Fenêtre de grâce (jours) : tolère une panne du serveur sans rétrograder un client payant. */
+    graceDays: number;
+    /** Timeout réseau (ms) de l'appel de vérification. */
+    timeoutMs: number;
+  };
 }
 
 /**
@@ -196,6 +217,13 @@ const config = {
     reportThreshold: {
       enabled: true,
       count: 3,
+    },
+
+    license: {
+      verifyUrl: 'https://isomorph.dev/api/licenses/verify',
+      verifyIntervalHours: 12,
+      graceDays: 7,
+      timeoutMs: 5000,
     },
   }),
 

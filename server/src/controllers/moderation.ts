@@ -16,7 +16,6 @@ import { type PluginConfig } from '../config';
 import { CommentServiceError } from '../services/comment';
 import { getStats } from '../services/admin-stats';
 import {
-  validateLicenseKey,
   COMMUNITY_COMMENT_LIMIT,
   PRO_PURCHASE_URL,
   type LicenseTier,
@@ -730,16 +729,41 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
     }
 
     const { licenseKey } = parseResult.data;
-    const isValid = validateLicenseKey(licenseKey);
+
+    // Vérification EN LIGNE contre le service ISOMORPH (le format seul ne suffit
+    // plus à valider une clé — cf. service license V2).
+    const licenseService = strapi.plugin('comments').service('license') as {
+      testKey: (key: string) => Promise<{
+        valid: boolean;
+        tier: string;
+        reason?: string;
+        serverUnreachable?: boolean;
+      }>;
+    };
+    const result = await licenseService.testKey(licenseKey);
+
+    let message: string;
+    if (result.valid) {
+      message =
+        'Clé de licence valide. Configurez COMMENTS_LICENSE_KEY dans votre .env pour activer le tier Pro.';
+    } else if (result.serverUnreachable) {
+      message =
+        'Impossible de contacter le service de vérification ISOMORPH pour le moment. Réessayez plus tard.';
+    } else if (result.reason === 'invalid_format') {
+      message = 'Format de clé invalide. Obtenez une clé sur ' + PRO_PURCHASE_URL;
+    } else {
+      message =
+        'Clé inconnue, révoquée ou expirée. Obtenez ou renouvelez votre licence sur ' +
+        PRO_PURCHASE_URL;
+    }
 
     ctx.status = 200;
     ctx.body = {
       data: {
-        valid: isValid,
-        tier: isValid ? 'pro' : 'community',
-        message: isValid
-          ? 'Clé de licence valide. Configurez COMMENTS_LICENSE_KEY dans votre .env pour activer le tier Pro.'
-          : 'Clé de licence invalide. Vérifiez le format ou obtenez une clé sur ' + PRO_PURCHASE_URL,
+        valid: result.valid,
+        tier: result.tier,
+        reason: result.reason,
+        message,
       },
     };
   },
