@@ -21,7 +21,7 @@
 
 import { type Core } from '@strapi/strapi';
 import { type StrapiContext } from '../types/strapi';
-import { createLicenseService, PRO_PURCHASE_URL } from '../services/license';
+import { PRO_PURCHASE_URL } from '../services/license';
 
 /**
  * Factory du middleware license-gate pour Strapi V5.
@@ -31,7 +31,10 @@ import { createLicenseService, PRO_PURCHASE_URL } from '../services/license';
  */
 export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) =>
   async (ctx: StrapiContext, next: () => Promise<void>): Promise<void> => {
-    const licenseService = createLicenseService(strapi);
+    // Service singleton (cache de licence partagé — ne pas ré-instancier).
+    const licenseService = strapi.plugin('comments').service('license') as {
+      isProLicense: () => boolean;
+    };
 
     if (licenseService.isProLicense()) {
       // Licence Pro valide — accès accordé

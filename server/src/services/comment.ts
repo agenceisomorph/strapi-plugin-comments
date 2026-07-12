@@ -22,7 +22,7 @@ import { type PluginConfig } from '../config';
 import * as avatarService from './avatar';
 import * as profanityService from './profanity';
 import * as subscriberService from './subscriber';
-import { createLicenseService, COMMUNITY_COMMENT_LIMIT, PRO_PURCHASE_URL } from './license';
+import { COMMUNITY_COMMENT_LIMIT, PRO_PURCHASE_URL } from './license';
 
 /**
  * Lit les paramètres stockés en base (Strapi store) et les merge avec la config statique.
@@ -271,7 +271,10 @@ export async function create(
   // En tier Community, on bloque la création si le seuil est atteint.
   // Fail-open : si le service de licence ou le comptage échoue, on laisse passer.
   try {
-    const licenseService = createLicenseService(strapi);
+    // Service singleton (cache de licence partagé — ne pas ré-instancier).
+    const licenseService = strapi.plugin('comments').service('license') as {
+      getTier: () => string;
+    };
     if (licenseService.getTier() === 'community') {
       const count = await strapi.documents('plugin::comments.comment').count({});
       if (count >= COMMUNITY_COMMENT_LIMIT) {
