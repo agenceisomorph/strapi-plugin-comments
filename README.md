@@ -1,8 +1,8 @@
-# strapi-plugin-comments
+# @isomorph-agency/strapi-plugin-comments
 
-[![npm version](https://img.shields.io/npm/v/strapi-plugin-comments.svg?style=flat-square)](https://www.npmjs.com/package/strapi-plugin-comments)
-[![license](https://img.shields.io/npm/l/strapi-plugin-comments.svg?style=flat-square)](https://github.com/isomorph-agency/strapi-plugin-comments/blob/main/LICENSE)
-[![tests](https://img.shields.io/github/actions/workflow/status/isomorph-agency/strapi-plugin-comments/ci.yml?label=tests&style=flat-square)](https://github.com/isomorph-agency/strapi-plugin-comments/actions)
+[![npm version](https://img.shields.io/npm/v/%40isomorph-agency%2Fstrapi-plugin-comments.svg?style=flat-square)](https://www.npmjs.com/package/@isomorph-agency/strapi-plugin-comments)
+[![license](https://img.shields.io/npm/l/%40isomorph-agency%2Fstrapi-plugin-comments.svg?style=flat-square)](https://github.com/agenceisomorph/strapi-plugin-comments/blob/main/LICENSE)
+[![tests](https://img.shields.io/github/actions/workflow/status/agenceisomorph/strapi-plugin-comments/ci.yml?label=tests&style=flat-square)](https://github.com/agenceisomorph/strapi-plugin-comments/actions)
 [![strapi v5](https://img.shields.io/badge/strapi-v5-4945FF?style=flat-square)](https://strapi.io)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square)](https://www.typescriptlang.org)
 
@@ -56,7 +56,7 @@ Threaded comments, built-in moderation panel, anti-profanity filter, Google reCA
 ### Step 1 — Install the plugin
 
 ```bash
-npm install strapi-plugin-comments
+npm install @isomorph-agency/strapi-plugin-comments
 ```
 
 ### Step 2 — Enable the plugin
@@ -161,7 +161,7 @@ export default {
 Implement the `RateLimitStore` interface to replace the in-memory store:
 
 ```ts
-import type { RateLimitStore } from 'strapi-plugin-comments/server';
+import type { RateLimitStore } from '@isomorph-agency/strapi-plugin-comments/server';
 
 const redisStore: RateLimitStore = {
   async increment(key, windowMs) {
@@ -188,7 +188,7 @@ export default {
 ### Custom profanity filter
 
 ```ts
-import type { ProfanityFilterService } from 'strapi-plugin-comments/server';
+import type { ProfanityFilterService } from '@isomorph-agency/strapi-plugin-comments/server';
 
 const myFilter: ProfanityFilterService = {
   check(text: string): boolean {
@@ -494,7 +494,7 @@ Security is built into every layer of the plugin, not bolted on as an afterthoug
 
 ## Freemium Model
 
-`strapi-plugin-comments` follows a freemium model. The Community version is fully functional for most use cases.
+`@isomorph-agency/strapi-plugin-comments` follows a freemium model. The Community version is fully functional for most use cases.
 
 | Feature | Community (free) | Pro | Enterprise |
 |---------|:---:|:---:|:---:|
@@ -537,7 +537,7 @@ Contributions are welcome. Please follow the steps below.
 
 ```bash
 # Clone the repository
-git clone https://github.com/isomorph-agency/strapi-plugin-comments.git
+git clone https://github.com/agenceisomorph/strapi-plugin-comments.git
 cd strapi-plugin-comments
 
 # Install dependencies
